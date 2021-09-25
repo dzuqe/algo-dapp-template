@@ -43,6 +43,7 @@ class App {
     );
 
     this.gamestate = null;
+    this.elem.appendChild(this.btns);
   }
 
   /**
@@ -97,6 +98,7 @@ class App {
         let r = app.params['global-state'][key];
         recentState[atob(r.key)] = r.value;
       }
+      console.log(recentState);
 
       // check for differences
 
@@ -133,9 +135,8 @@ btn.onclick = async function() {
 }
 
 let callappbtn = document.createElement('button');
-callappbtn.id = "call";
 callappbtn.style.display = "none";
-callappbtn.innerText = " 🔫 Take Shot";
+callappbtn.innerText = "Call App";
 callappbtn.onclick = async function() {
   app.callapp();
 }
