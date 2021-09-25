@@ -24,6 +24,7 @@ class App {
 
   constructor() {
     this.elem = document.createElement('div');
+    this.btns = document.createElement('div');
     this.elem.id = 'viewport';
     this.wallet = new MyAlgoConnect();
 
@@ -80,7 +81,6 @@ class App {
       let signedTxn = await this.wallet.signTransaction(txn);
       await this.algodClient.sendRawTransaction(signedTxn.blob).do();
       this.readapp();
-      this.updateImage(intro);
     } catch(err) {
       console.error(err);
     }
@@ -110,7 +110,7 @@ class App {
   /**
    * Utilties
    */
-  function addbtn(btn: HTMLElement) {
+  addbtn(btn: HTMLElement) {
     this.btns.appendChild(btn);
   }
 
