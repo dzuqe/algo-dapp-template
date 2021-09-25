@@ -1,37 +1,52 @@
+/**
+ * Author: @dzuqe
+ */
+
 import MyAlgoConnect, {CallApplTxn} from '@randlabs/myalgo-connect';
 import algosdk from 'algosdk';
 
 class App {
+  // main element
   elem: HTMLElement;
+
+  // algorand data
   wallet: any;
   algodClient: any;
   accounts: any;
   addresses: any;
+  appid: number = 296143611;
+
+  // game data
   isConnected: boolean;
   gamestate: object;
+
   btns: HTMLElement;
-  appid: number = 296143611;
-  msg: HTMLElement;
-  maxhit: number = 10;
 
   constructor() {
     this.elem = document.createElement('div');
     this.elem.id = 'viewport';
     this.wallet = new MyAlgoConnect();
+
+    // Private network
     //this.algodClient = new algosdk.Algodv2(
     //  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 
     //  'http://127.0.0.1', 
     //  '4001'
     //);
+
+    // Open public algoexplorer node
     this.algodClient = new algosdk.Algodv2(
       '', 
       'https://api.algoexplorer.io', 
       ''
     );
+
     this.gamestate = null;
   }
 
-
+  /**
+   * Connect to an algorand account via the MyAlgoConnect
+   */
   async connect() {
     try {
       this.isConnected = true;
@@ -44,7 +59,10 @@ class App {
       console.error(err);
     }
   }
-
+  
+  /**
+   * Call the application
+   */
   async callapp() {
     try {
       let txnn = await this.algodClient.getTransactionParams().do();
@@ -68,6 +86,9 @@ class App {
     }
   }
 
+  /**
+   * Read the application
+   */
   async readapp() {
     try {
       let app = await this.algodClient.getApplicationByID(this.appid).do();
@@ -86,15 +107,22 @@ class App {
     }
   }
 
+  /**
+   * Utilties
+   */
   function addbtn(btn: HTMLElement) {
     this.btns.appendChild(btn);
   }
 
+  /**
+   * Display the application
+   */
   render() {
     document.getElementById("root").appendChild(this.elem);
   }
 };
 
+// main program
 let app: App = new App();
 
 let btn = document.createElement('button');
@@ -115,6 +143,6 @@ callappbtn.onclick = async function() {
 app.addbtn(btn);
 app.addbtn(callappbtn);
 
-window['app'] = app;
+window['app'] = app; // debugging
 
 app.render();
