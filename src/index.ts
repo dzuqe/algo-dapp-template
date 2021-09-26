@@ -18,7 +18,8 @@ class App {
 
   // game data
   isConnected: boolean;
-  gamestate: object;
+  globalState: object;
+  localState: object;
 
   btns: HTMLElement;
 
@@ -42,7 +43,8 @@ class App {
       ''
     );
 
-    this.gamestate = null;
+    this.globalState = null;
+    this.localState = null;
     this.elem.appendChild(this.btns);
   }
 
@@ -89,23 +91,87 @@ class App {
 
   /**
    * Read the application
+   * The data needs to be decoded from base64 to ASCII text
    */
   async readapp() {
     try {
-      let app = await this.algodClient.getApplicationByID(this.appid).do();
-      var recentState = {};
-      for (var key in app.params['global-state']) {
-        let r = app.params['global-state'][key];
-        recentState[atob(r.key)] = r.value;
+      // read the global state
+      let globalState = await this.algodClient.getApplicationByID(this.appid).do();
+      var _global = {};
+      for (var key in globalState.params['global-state']) {
+        let r = globalState.params['global-state'][key];
+        _global[atob(r.key)] = r.value;
       }
-      console.log(recentState);
+      console.log(_global);
+
+      // read the local state
+      let localState = await this.algodClient.accountInformation(this.addresses[0]).do();
+      var local = {};
+      for (var app in localState['apps-local-state']) {
+        // check for our app
+        if (localState['apps-local-state'][app]['id'] === this.appid) {
+          for (var key in localState['apps-local-state'][app]['key-value']) {
+            let r = localState['apps-local-state'][app]['key-value'][key];
+            local[atob(r.key)] = r.value;
+          }
+        }
+      }
+      console.log(local);
 
       // check for differences
+      if (this.globalState !== _global) {
+        console.log("global state changed");
+      }
 
-      // update state
-      this.gamestate = recentState;
+      if (this.localState !== local) {
+        console.log("local state changed");
+      }
+
+      // store recent state
+      this.globalState = _global;
+      this.localState = local;
+
+      this.update();
+
     } catch (err) {
       console.error(err);
+    }
+  }
+
+  async optin() {
+    await this.opt(1);
+    await this.readapp();
+  }
+
+  async optout() {
+    await this.opt(2);
+    await this.readapp();
+  }
+
+  async opt(action) {
+    try {
+      let txnn = await this.algodClient.getTransactionParams().do();
+      let txn: CallApplTxn = {
+        ...txnn,
+        from: this.addresses[0],
+        fee: 1000,
+        flatFee: true,
+        appIndex: this.appid,
+        type: 'appl',
+        appOnComplete: action,
+      };
+
+      let signedTxn = await this.wallet.signTransaction(txn);
+      await this.algodClient.sendRawTransaction(signedTxn.blob).do();
+      if (action === 1) {
+        console.log("You have successfully opted in! You can now try your luck at winning tokens!");
+      } else {
+        console.log("You have successfully opted out! You won't be able to play anymore!");
+      }
+      this.readapp();
+    } catch(e) {
+      console.error(e.response.text);
+      this.box.innerText = e.response.text;
     }
   }
 
